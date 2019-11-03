@@ -13,7 +13,7 @@ $SPEC{':package'} = {
     summary => 'CLI utilities related to cron & crontab',
 };
 
-my %arg_file = (
+my %arg0_file = (
     file => {
         schema => 'filename*',
         req => 1,
@@ -24,7 +24,8 @@ my %arg_file = (
 my %argopt_parser = (
     parser => {
         schema => ['str*', in=>[qw/Parse::Crontab Pegex::Crontab/]],
-        default => 'Parse::Crontab',
+        #default => 'Parse::Crontab',
+        default => 'Pegex::Crontab',
     },
 );
 
@@ -62,9 +63,11 @@ sub parse_crontab {
             return [500, "Can't parse $args{file}: " . $parser->error_messages];
         }
         $crontab_data = [];
+        # XXX use entries instead of jobs, unwrap minute hour etc from the
+        # object
         for my $job ($parser->jobs) {
             push @$crontab_data, {
-                minute =>  $job->minute,
+                minute =>  $job->minute + 0,
                 hour => $job->hour,
                 day => $job->day,
                 month => $job->month,
@@ -72,7 +75,8 @@ sub parse_crontab {
                 command => $job->command,
             };
         }
-        return [200, $crontab_data];
+        #use DD; dd $crontab_data;
+        return [200, "OK", $crontab_data];
     } elsif ($parser eq 'Pegex::Crontab') {
         require Pegex::Crontab;
         $crontab_data = Pegex::Crontab->new->parse($crontab_str);
